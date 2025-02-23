@@ -46,10 +46,8 @@ jobs:
         if: steps.compare_hashes.outputs.same != 'true'
         uses: android-actions/setup-android@v2
         with:
-          build-tools: '30.0.3'  # A version known to include aapt
-      - name: Install aapt
-        if: steps.compare_hashes.outputs.same != 'true'
-        run: sudo apt install aapt
+          packages: 'build-tools;30.0.3'
+      
 
       - name: Set up Python
         if: steps.compare_hashes.outputs.same != 'true'
