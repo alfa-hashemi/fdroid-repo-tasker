@@ -13,7 +13,9 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Download APK
-        run: curl -L -o downloaded.apk ${{ secrets.APK_URL }}
+        run: |
+          curl -L -o downloaded.apk ${{ secrets.APK_URL }}
+          ls -lAh downloaded.apk
 
       - name: Calculate Hash of Downloaded APK
         id: hash_downloaded
