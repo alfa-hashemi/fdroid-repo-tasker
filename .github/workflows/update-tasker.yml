@@ -45,6 +45,8 @@ jobs:
       - name: Set up Android SDK
         if: steps.compare_hashes.outputs.same != 'true'
         uses: android-actions/setup-android@v2
+        with:
+          build-tools: '30.0.3'  # A version known to include aapt
 
       - name: Set up Python
         if: steps.compare_hashes.outputs.same != 'true'
