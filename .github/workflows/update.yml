@@ -1,20 +1,77 @@
-name: Check for new versions and update Tasker APKs
-on:
-    schedule:
-        - cron: "0 0 * * *" # daily
-    workflow_dispatch: # allow manual triggering of the action
+name: Daily Check for Tasker Update
 
-# permissions:
-#     contents: write
-#     pages: write
-#     id-token: write
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 0 * * *' # Runs at midnight UTC every day
 
 jobs:
-    test_job:
-        name: a test job
-        runs-on: ubuntu-latest
-        steps:
-            - run: echo "hi byatch"
+  update-apk:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
 
-              
-    
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.x'
+
+      - name: Install fdroidserver
+        run: pip install fdroidserver
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v2
+
+      - name: Download APK
+        run: curl -L -o downloaded.apk ${{ secrets.APK_URL }}
+
+      - name: Extract package name and version code
+        run: |
+          PACKAGE_NAME=$(aapt dump badging downloaded.apk | grep package | awk '{print $2}' | sed "s/name='//g" | sed "s/'//g")
+          VERSION_CODE=$(aapt dump badging downloaded.apk | grep package | awk '{print $4}' | sed "s/versionCode='//g" | sed "s/'//g")
+          VERSION_NAME=$(aapt dump badging downloaded.apk | grep package | awk '{print $3}' | sed "s/versionName='//g" | sed "s/'//g")
+          echo "PACKAGE_NAME=$PACKAGE_NAME" >> $GITHUB_ENV
+          echo "VERSION_CODE=$VERSION_CODE" >> $GITHUB_ENV
+          echo "VERSION_NAME=$VERSION_NAME" >> $GITHUB_ENV
+
+      - name: Check if APK already exists
+        id: check_apk
+        run: |
+          FILENAME="${PACKAGE_NAME}_${VERSION_CODE}.apk"
+          if [ -f "fdroid/repo/$FILENAME" ]; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Copy APK to repo directory
+        if: steps.check_apk.outputs.exists != 'true'
+        run: |
+          FILENAME="${PACKAGE_NAME}_${VERSION_CODE}.apk"
+          mkdir -p fdroid/repo # Ensure the directory exists
+          cp downloaded.apk "fdroid/repo/$FILENAME"
+
+      - name: Run fdroid update
+        if: steps.check_apk.outputs.exists != 'true'
+        run: |
+          cd fdroid
+          fdroid update -c
+
+      - name: Update README
+        if: steps.check_apk.outputs.exists != 'true'
+        run: |
+          FILENAME="${PACKAGE_NAME}_${VERSION_CODE}.apk"
+          DOWNLOAD_LINK="https://github.com/${{ github.repository }}/raw/main/fdroid/repo/$FILENAME"
+          sed -i "/<!-- LATEST_VERSION_START -->/,/<!-- LATEST_VERSION_END -->/c\<!-- LATEST_VERSION_START -->\n## Latest Version\n- Version Name: $VERSION_NAME\n- Version Code: $VERSION_CODE\n- Download: [$FILENAME]($DOWNLOAD_LINK)\n<!-- LATEST_VERSION_END -->" README.md
+
+      - name: Commit and push changes
+        if: steps.check_apk.outputs.exists != 'true'
+        run: |
+          git config --global user.name 'GitHub Action'
+          git config --global user.email 'action@github.com'
+          git add fdroid/repo/*.apk fdroid/index.* README.md
+          git commit -m "Update APK to version $VERSION_NAME ($VERSION_CODE)"
+          git push
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
