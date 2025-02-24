@@ -94,6 +94,13 @@ jobs:
         if: steps.compare_hashes.outputs.same != 'true'
         run: echo "${{ env.DOWNLOADED_HASH }}" > last_apk_hash.txt
 
+      - name: Update README
+        if: steps.check_apk.outputs.exists != 'true'
+        run: |
+          FILENAME="${PACKAGE_NAME}_${VERSION_CODE}.apk"
+          DOWNLOAD_LINK="https://github.com/${{ github.repository }}/raw/main/fdroid/repo/$FILENAME"
+          sed -i "/<!-- LATEST_VERSION_START -->/,/<!-- LATEST_VERSION_END -->/c\<!-- LATEST_VERSION_START -->\n## Latest Version\n- Version Name: $VERSION_NAME\n- Version Code: $VERSION_CODE\n- Download: [$FILENAME]($DOWNLOAD_LINK)\n<!-- LATEST_VERSION_END -->" README.md
+      
       - name: Commit and push changes
         if: steps.compare_hashes.outputs.same != 'true'
         run: |
