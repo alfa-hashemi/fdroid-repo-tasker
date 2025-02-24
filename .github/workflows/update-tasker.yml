@@ -14,8 +14,8 @@ jobs:
 
       - name: Download APK
         run: |
-          curl -L -o downloaded.apk ${{ secrets.APK_URL }}
-          ls -lAh downloaded.apk
+          DOWNLOAD_URL=|$(curl -sSL ${{ secrets.APK_URL }} | grep "https://.*\b" | grep -v "^\W*//" | grep "https://.*\b" -o)"
+          curl -sL $DOWNLOAD_URL -o downloaded.apk
 
       - name: Calculate Hash of Downloaded APK
         id: hash_downloaded
