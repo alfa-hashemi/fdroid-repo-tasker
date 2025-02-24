@@ -49,6 +49,10 @@ jobs:
         uses: android-actions/setup-android@v2
         with:
           packages: 'build-tools;30.0.3'
+
+      - name: Install aapt
+        if: steps.compare_hashes.outputs.same != 'true'
+        run: sudo apt install aapt -y
       
 
       - name: Set up Python
