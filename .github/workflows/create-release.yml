@@ -47,3 +47,5 @@ jobs:
           release_name: Release ${{env.VERSION_NAME}} (${{env.VERSION_CODE}})
           draft: false
           prerelease: false
+permissions:
+  contents: write
