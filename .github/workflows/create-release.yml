@@ -37,9 +37,13 @@ jobs:
           APK_FILE=$(ls fdroid/repo/*_${VERSION_CODE}.apk)
           echo "APK_FILE=$APK_FILE" >> $GITHUB_ENV
 
-      - name: Create Release
+      - name: Create release
         if: steps.check_commit.outputs.proceed == 'true'
-        run: |
-          gh release create v${VERSION_NAME} ${{ env.APK_FILE }} --title "Version ${VERSION_NAME}" --notes "Release for version ${VERSION_NAME} (${VERSION_CODE})"
+        uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{env.VERSION_NAME}}
+          release_name: Release ${{env.VERSION_NAME}} (${{env.VERSION_CODE}})
+          draft: false
+          prerelease: false
