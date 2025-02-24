@@ -7,7 +7,7 @@ https://github.com/oxcl/fdroid-repo-tasker/blob/refs/heads/main/fdroid/repo
 ```
 
 QR Code:
-![F-Droid Repo QR Code](fdroid/repo/index.png.png "Scan it with the F-Droid app")
+![F-Droid Repo QR Code](fdroid/repo/index.png "Scan it with the F-Droid app")
 
 <!-- LATEST_VERSION_START -->
 ## Latest Version
